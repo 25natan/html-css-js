@@ -27,7 +27,7 @@
         box-sizing: border-box;
         outline: none;
         width: 600px;
-        max-width: 90%;
+        max-width: 100%;
         padding-left: 10px;
         border-radius: 5px;
         border: 1px solid black;
@@ -42,7 +42,7 @@
         background-color: #09a0aa;
         font: inherit;
         width: 600px;
-        max-width: 90%;
+        max-width: 100%;
     }
     .submit-array:hover{
         background-color: #06585e;
@@ -67,6 +67,7 @@
         border: 1px solid black;
         border-radius: 5px;
         margin-right: 10px;
+        margin-bottom: 10px;
     }
     .array-element.swapped{
         border-color: red;
@@ -111,43 +112,42 @@
                     '</div>';
             document.getElementById('array').innerHTML = html;
         }
+        const highlightElements = (i, j, additionalClass) => {
+            const array = document.getElementById('array').children;
+            array[i].classList.add(additionalClass);
+            array[j].classList.add(additionalClass);
+        }
+        const setStatus = (status) => {
+            const statusElem = document.getElementById('status');
+            statusElem.innerHTML = status === 'comparing' ? 'Comparing...' : 'Swapping...';
+            statusElem.className = status;
+        }
         const bubbleSort = async () => {
             const array = parseArrayInput(document.getElementById('array-input').value);
             if(!array){
                 document.getElementById('input-error').innerHTML = 'Incorrect input!';
                 return;
             }
-            insertArrayToHtml(array);
-            const arrayHTML = document.getElementById('array').children;
-            const status = document.getElementById('status');
-            const n = arrayHTML.length;
+            document.getElementById('input-error').innerHTML = '';
+            const n = array.length;
             for(let i = n - 1;i > 0;i--)
                 for(let j = 0;j < i;j++){
-                    status.classList.add('comparing');
-                    status.innerHTML = 'Comparing...';
-                    arrayHTML[j].classList.add('compared');
-                    arrayHTML[j + 1].classList.add('compared');
+                    insertArrayToHtml(array);
+                    highlightElements(j, j + 1, 'compared');
+                    setStatus('comparing');
                     await sleep(1000);
-                    arrayHTML[j].classList.remove('compared');
-                    arrayHTML[j + 1].classList.remove('compared');
-                    status.innerHTML = '';
-                    status.classList.remove('comparing');
-                    const [elem1, elem2] = [arrayHTML[j].innerHTML, arrayHTML[j + 1].innerHTML]
-                    if(new Number(elem1) > new Number(elem2))
+                    if(array[j] > array[j + 1])
                     {
-                        status.classList.add('swapping');
-                        status.innerHTML = 'Swapping...';
-                        arrayHTML[j].classList.add('swapped');
-                        arrayHTML[j + 1].classList.add('swapped');
-                        arrayHTML[j].innerHTML = elem2;
-                        arrayHTML[j + 1].innerHTML = elem1;
+                        [array[j], array[j + 1]] = [array[j + 1], array[j]];
+                        insertArrayToHtml(array);
+                        highlightElements(j, j + 1, 'swapped');
+                        setStatus('swapping');
                         await sleep(1000);
-                        arrayHTML[j].classList.remove('swapped');
-                        arrayHTML[j + 1].classList.remove('swapped');
-                        status.innerHTML = '';
-                        status.classList.remove('swapping');
                     }
+                    
                 }
+            insertArrayToHtml(array);
+            document.getElementById('status').innerHTML = '';
         }
         document.getElementById('submit-array').addEventListener('click', bubbleSort);
     </script>
