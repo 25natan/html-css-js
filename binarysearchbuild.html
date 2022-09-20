@@ -7,6 +7,9 @@
     <title>Document</title>
 </head>
     <style>
+    #bst {
+        max-width: 600px;
+    }
     body{
         font-size: 1.5rem;
     }
@@ -39,34 +42,34 @@
         border-radius: 5px;
         border: none;
         color: white;
-        background-color: #09a0aa;
+        background-color: #02a046;
         font: inherit;
         width: 600px;
         max-width: 100%;
     }
     .submit-array:hover{
-        background-color: #06585e;
+        background-color: #015626;
         transform: scale(1.02);
     }
     .array-input:focus{
-        border: 1px solid #09a0aa;
-        box-shadow: 0 0 5px #09a0aa;
+        border: 1px solid #02a046;
+        box-shadow: 0 0 5px #02a046;
     }
     .input-error{
         color: red;
     }
-    .wrapper {
+    .tree-wrapper {
         display: grid;
         grid-template-columns: 50% 50%;
     }
-    .parent {
+    .node-wrapper {
         display: flex;
         flex-direction: column;
         align-items: center;
         position: relative;
         grid-row: 1;
         grid-column: 1 / 3;
-        margin-bottom: 100px;
+        margin-bottom: 70px;
     }
     .left {
         grid-row: 2;
@@ -79,7 +82,7 @@
     .edge {
         position: absolute;
         top: 100%;
-        height: 100px;
+        height: 70px;
         width: 25%;
     }
     .right-edge {
@@ -89,28 +92,27 @@
         left: 25%;
     }
     .node {
+        box-sizing: border-box;
         padding: 10px;
-        color: rgb(0, 59, 59);
-        background-color: aqua;
-        border: 1px solid rgb(0, 59, 59);
-        border-radius: 10px;
+        color: #015626;
+        background-color: #2eff88;
+        border: 1px solid #015626;
+        border-radius: 5px;
     }
     line {
-        stroke:rgb(0, 59, 59);
-        stroke-width: 2;
+        stroke: #00421c;
+        stroke-width: 1;
     }
     </style>
 <body>
-    <div class="container">
-        <div>
-            <h2>Binary Search Tree Builder Simulator</h2>
-            <h3>Input</h3>
-            <input class="array-input" id="array-input" placeholder="Enter numbers, seperated by spaces...">
-            <button class="submit-array" id="submit-array">Sort</button>
-            <div class="input-error" id="input-error"></div>
-            <h3>Tree Output</h3>
-        </div>
-        <div class="tree" id="tree"></div>
+    <div class="container" id="container">
+        <h2>Binary Search Tree Build Simulator</h2>
+        <h3>Input</h3>
+        <input class="array-input" id="array-input" placeholder="Enter numbers, seperated by spaces...">
+        <button class="submit-array" id="submit-array">Build Binary Search Tree</button>
+        <div class="input-error" id="input-error"></div>
+        <h3>Tree Output</h3>
+        <div id="bst"></div>
     </div>
     <script>
         const sleep = async (ms) => {
@@ -123,18 +125,7 @@
                 return null;
             return array;
         }
-        const treeWidth = () => document.getElementById('tree').offsetWidth;
-        const createNewTreeNode = (value) => {
-            return {elem: document.createElement('div', {
-                className: 'node',
-                innerHTML: value}),
-                value:value,
-            };
-        }
-        const insertNodesHtml = (treeElem, root, xRange, top) => {
-
-        }
-        const createBst = (array) => {
+        const createBstFromArray = (array) => {
             const n = array.length;
             const root = {value: array[0]};
             for(let i = 1;i < n;i++){
@@ -152,13 +143,34 @@
             }
             return root;
         }
+        const createBstHtml = (root) => {
+            const treeWrapper = document.createElement('div');
+            treeWrapper.className = 'tree-wrapper';
+            treeWrapper.innerHTML = `<div class="node-wrapper"><div class="node">${root.value}</div></div>`
+            if(root.right) {
+                treeWrapper.firstElementChild.insertAdjacentHTML('beforeend', `<svg class="edge right-edge">
+                    <line x1="0" y1="0" x2="100%" y2="100%"></svg>`);
+                treeWrapper.insertAdjacentHTML('beforeend', '<div class="right"></div>');
+                treeWrapper.lastElementChild.insertAdjacentElement('beforeend', createBstHtml(root.right));
+            }
+            if(root.left) {
+                treeWrapper.firstElementChild.insertAdjacentHTML('beforeend', `<svg class="edge left-edge">
+                    <line x1="0" y1="100%" x2="100%" y2="0"></svg>`);
+                treeWrapper.insertAdjacentHTML('beforeend', '<div class="left"></div>');
+                treeWrapper.lastElementChild.insertAdjacentElement('beforeend', createBstHtml(root.left));
+            }
+            return treeWrapper;
+        }
         const buildBST = () => {
             const array = parseArrayInput(document.getElementById('array-input').value);
             if(!array){
                 document.getElementById('input-error').innerHTML = 'Incorrect input!';
                 return;
             }
-            insertNodesHtml(document.getElementById('tree'), createBst(array), [0, treeWidth()], 0);
+            const bstHtml = createBstHtml(createBstFromArray(array));
+            const bst = document.getElementById('bst');
+            bst.innerHTML = '';
+            bst.insertAdjacentElement('beforeend', bstHtml);
         }
         document.getElementById('submit-array').addEventListener('click', buildBST)
     </script>
