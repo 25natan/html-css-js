@@ -7,9 +7,6 @@
     <title>Document</title>
 </head>
     <style>
-    #bst {
-        max-width: 800px;
-    }
     body{
         font-size: 1.5rem;
     }
@@ -97,7 +94,12 @@
         color: #015626;
         background-color: #2eff88;
         border: 1px solid #015626;
-        border-radius: 5px;
+        border-radius: 50%;
+    }
+    .new-node {
+        background-color: #2ef8ff;
+        border: 1px solid #01787c;
+        box-shadow: 0 0 10px #01787c;
     }
     line {
         stroke: #00421c;
@@ -125,52 +127,49 @@
                 return null;
             return array;
         }
-        const createBstFromArray = (array) => {
-            const n = array.length;
-            const root = {value: array[0]};
-            for(let i = 1;i < n;i++){
-                let node = root;
-                while(true){
-                    if(array[i] > node.value && node.right)
-                        node = node.right;
-                    else if(array[i] <= node.value && node.left)
-                        node = node.left;
-                    else {
-                        array[i] > node.value ? node.right = {value: array[i]} : node.left = {value: array[i]};
-                        break;
-                    }
-                }
-            }
-            return root;
+        const treeWrapper = (value) => {
+            const elem = document.createElement('div');
+            elem.className = 'tree-wrapper';
+            elem.innerHTML = `<div class="node-wrapper"><div class="node new-node">${value}</div></div>`;
+            return elem;
         }
-        const createBstHtml = (root) => {
-            const treeWrapper = document.createElement('div');
-            treeWrapper.className = 'tree-wrapper';
-            treeWrapper.innerHTML = `<div class="node-wrapper"><div class="node">${root.value}</div></div>`
-            if(root.right) {
-                treeWrapper.firstElementChild.insertAdjacentHTML('beforeend', `<svg class="edge right-edge">
-                    <line x1="0" y1="0" x2="100%" y2="100%"></svg>`);
-                treeWrapper.insertAdjacentHTML('beforeend', '<div class="right"></div>');
-                treeWrapper.lastElementChild.insertAdjacentElement('beforeend', createBstHtml(root.right));
+        const insertNewValue = (tree, newValue) => {
+            const currentValue = Number(tree.querySelector(':scope > .node-wrapper > .node').innerText);
+            if(newValue > currentValue && !tree.querySelector(':scope > .right')) {
+                tree.insertAdjacentHTML('beforeend', '<div class="right"></div>');
+                tree.lastElementChild.insertAdjacentElement('beforeend', treeWrapper(newValue));
+                tree.firstElementChild.insertAdjacentHTML('beforeend', '<svg class="edge right-edge"><line x1="0" y1="0" x2="100%" y2="100%"></line></svg>');
             }
-            if(root.left) {
-                treeWrapper.firstElementChild.insertAdjacentHTML('beforeend', `<svg class="edge left-edge">
-                    <line x1="0" y1="100%" x2="100%" y2="0"></svg>`);
-                treeWrapper.insertAdjacentHTML('beforeend', '<div class="left"></div>');
-                treeWrapper.lastElementChild.insertAdjacentElement('beforeend', createBstHtml(root.left));
+            else if(newValue > currentValue) {
+                insertNewValue(tree.querySelector(':scope > .right > .tree-wrapper'), newValue);
             }
-            return treeWrapper;
+            else if(!tree.querySelector(':scope > .left')) {
+                tree.insertAdjacentHTML('beforeend', '<div class="left"></div>');
+                tree.lastElementChild.insertAdjacentElement('beforeend', treeWrapper(newValue));
+                tree.firstElementChild.insertAdjacentHTML('beforeend', '<svg class="edge left-edge"><line x1="0" y1="100%" x2="100%" y2="0"></line></svg>')
+            }
+            else {
+                insertNewValue(tree.querySelector(':scope > .left > .tree-wrapper'), newValue);
+            }
         }
-        const buildBST = () => {
+        const buildBST = async () => {
             const array = parseArrayInput(document.getElementById('array-input').value);
             if(!array){
                 document.getElementById('input-error').innerHTML = 'Incorrect input!';
                 return;
             }
-            const bstHtml = createBstHtml(createBstFromArray(array));
-            const bst = document.getElementById('bst');
-            bst.innerHTML = '';
-            bst.insertAdjacentElement('beforeend', bstHtml);
+            const tree = treeWrapper(array[0]);
+            document.getElementById('bst').innerHTML = '';
+            bst.insertAdjacentElement('beforeend', tree);
+
+            for(let i = 1;i < array.length;i++) {
+                await sleep(1000);
+                tree.querySelector('.new-node').classList.remove('new-node');
+                insertNewValue(tree, array[i]);
+                document.getElementById('bst').innerHTML = '';
+                bst.insertAdjacentElement('beforeend', tree);
+            }
+            
         }
         document.getElementById('submit-array').addEventListener('click', buildBST)
     </script>
