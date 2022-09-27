@@ -11,7 +11,6 @@
         font-size: 1.5rem;
     }
     .container{
-        margin-top: 100px;
         margin-right: auto;
         margin-left: auto;
         width: 80%;
@@ -96,10 +95,20 @@
         border: 1px solid #015626;
         border-radius: 50%;
     }
-    .new-node {
-        background-color: #2ef8ff;
-        border: 1px solid #01787c;
-        box-shadow: 0 0 10px #01787c;
+    .node.compared {
+        animation-name: pulse;
+        animation-duration: 0.4s;
+        animation-iteration-count: infinite;
+        animation-direction: alternate;
+        z-index: 1;
+    }
+    @keyframes pulse {
+        from {
+            scale: 0.95;
+        }
+        to {
+            scale: 1;
+        }
     }
     line {
         stroke: #00421c;
@@ -117,6 +126,7 @@
         <div id="bst"></div>
     </div>
     <script>
+        const SECOND = 1000;
         const sleep = async (ms) => {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
@@ -127,29 +137,39 @@
                 return null;
             return array;
         }
-        const treeWrapper = (value) => {
+        const newNodeElement = (value) => {
             const elem = document.createElement('div');
             elem.className = 'tree-wrapper';
-            elem.innerHTML = `<div class="node-wrapper"><div class="node new-node">${value}</div></div>`;
+            elem.innerHTML = `<div class="node-wrapper"><div class="node">${value}</div></div>`;
             return elem;
         }
-        const insertNewValue = (tree, newValue) => {
-            const currentValue = Number(tree.querySelector(':scope > .node-wrapper > .node').innerText);
+        const insertNewValue = async (tree, newValue) => {
+            const currentNode = tree.querySelector(':scope > .node-wrapper > .node')
+            console.log(currentNode);
+            const currentValue = Number(currentNode.innerHTML);
+            currentNode.innerHTML = newValue > currentValue ? `${newValue} > ${currentValue}` : `${newValue} &#8804 ${currentValue}`;
+            currentNode.classList.add('compared')
+            await sleep(1.6 * SECOND);
+            currentNode.innerText = currentValue;
+            currentNode.classList.remove('compared');
+
             if(newValue > currentValue && !tree.querySelector(':scope > .right')) {
                 tree.insertAdjacentHTML('beforeend', '<div class="right"></div>');
-                tree.lastElementChild.insertAdjacentElement('beforeend', treeWrapper(newValue));
+                tree.lastElementChild.insertAdjacentElement('beforeend', newNodeElement(newValue));
                 tree.firstElementChild.insertAdjacentHTML('beforeend', '<svg class="edge right-edge"><line x1="0" y1="0" x2="100%" y2="100%"></line></svg>');
+                await sleep(SECOND);
             }
             else if(newValue > currentValue) {
-                insertNewValue(tree.querySelector(':scope > .right > .tree-wrapper'), newValue);
+                await insertNewValue(tree.querySelector(':scope > .right > .tree-wrapper'), newValue);
             }
             else if(!tree.querySelector(':scope > .left')) {
                 tree.insertAdjacentHTML('beforeend', '<div class="left"></div>');
-                tree.lastElementChild.insertAdjacentElement('beforeend', treeWrapper(newValue));
+                tree.lastElementChild.insertAdjacentElement('beforeend', newNodeElement(newValue));
                 tree.firstElementChild.insertAdjacentHTML('beforeend', '<svg class="edge left-edge"><line x1="0" y1="100%" x2="100%" y2="0"></line></svg>')
+                await sleep(SECOND);
             }
             else {
-                insertNewValue(tree.querySelector(':scope > .left > .tree-wrapper'), newValue);
+                await insertNewValue(tree.querySelector(':scope > .left > .tree-wrapper'), newValue);
             }
         }
         const buildBST = async () => {
@@ -158,18 +178,14 @@
                 document.getElementById('input-error').innerHTML = 'Incorrect input!';
                 return;
             }
-            const tree = treeWrapper(array[0]);
-            document.getElementById('bst').innerHTML = '';
-            bst.insertAdjacentElement('beforeend', tree);
+            const root = newNodeElement(array[0]);
+            const bst = document.getElementById('bst')
+            bst.innerHTML = '';
+            bst.insertAdjacentElement('beforeend', root);
+            await sleep(SECOND);
 
-            for(let i = 1;i < array.length;i++) {
-                await sleep(1000);
-                tree.querySelector('.new-node').classList.remove('new-node');
-                insertNewValue(tree, array[i]);
-                document.getElementById('bst').innerHTML = '';
-                bst.insertAdjacentElement('beforeend', tree);
-            }
-            
+            for(let i = 1;i < array.length;i++)
+                await insertNewValue(root, array[i]);
         }
         document.getElementById('submit-array').addEventListener('click', buildBST)
     </script>
