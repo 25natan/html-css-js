@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    .wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px 10px;
+    }
+    .example {
+        width: 500px;
+        text-align: center;
+        border: 1px solid gray;
+        border-radius: 5px;
+        padding: 10px;
+        color: gray;
+    }
+    .example:hover {
+        color: black;
+        border-color: black;
+        box-shadow: 0 0 5px rgb(119, 0, 0);
+    }
+    .progress {
+        height: 50px;
+        width: 100%;
+        border: 1px solid gray;
+        border-radius: 5px;
+        background: linear-gradient(to right, #ffdb3a 45%, #3fffa2 100%);
+        background-repeat: no-repeat;
+        background-size: 0;
+    }
+    .example:hover > .progress {
+        border-color: black;
+        animation-name: progress;
+        animation-duration: 2s;
+        animation-iteration-count: infinite;
+        animation-direction: alternate;
+    }
+    .ease {
+        animation-timing-function: ease;
+    }
+    .ease-in {
+        animation-timing-function: ease-in;
+    }
+    .ease-out {
+        animation-timing-function: ease-out;
+    }
+    .ease-in-out {
+        animation-timing-function: ease-in-out;
+    }
+    .linear {
+        animation-timing-function: linear;
+    }
+    .steps {
+        animation-timing-function: steps(10, jump-none);
+    }
+    h1 {
+        text-align: center;
+    }
+    @keyframes progress {
+        to {
+            background-size: 100%;
+        }
+    }
+</style>
+<body>
+    <h1>Animation Timing Function Simulation</h1>
+    <div class="wrapper">
+        <div class="example">
+            <h2>ease</h2>
+            <h3>The default value, increases in velocity towards the middle of the animation, slowing back down at the end.</h3>
+            <div class="progress ease"></div>
+        </div>
+        <div class="example">
+            <h2>ease-in</h2>
+            <h3>Starts off slowly, with the speed of the transition of the animating property increasing until complete.</h3>
+            <div class="progress ease-in"></div>
+        </div>
+        <div class="example">
+            <h2>ease-out</h2>
+            <h3>Starts quickly, slowing down as the animation continues.</h3>
+            <div class="progress ease-out"></div>
+        </div>
+        <div class="example">
+            <h2>ease-in-out</h2>
+            <h3>The animating properties slowly transitioning, speeding up, and then slowing down again.</h3>
+            <div class="progress ease-in-out"></div>
+        </div>
+        <div class="example">
+            <h2>linear</h2>
+            <h3>Animates at an even speed.</h3>
+            <div class="progress linear"></div>
+        </div>
+        <div class="example">
+            <h2>steps</h2>
+            <h3>Displays an animation iteration along n stops along the transition.</h3>
+            <div class="progress steps"></div>
+        </div>
+    </div>
+</body>
+</html>
