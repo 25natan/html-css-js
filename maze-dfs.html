@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Downloader</title>
+</head>
+<style>
+    body {
+        width: 100%;
+        height: 100%;
+    }
+    .game {
+        border-radius: 2px;
+        background-color: black;
+        display: grid;
+        gap: 2px;
+        padding: 2px;
+    }
+    .game > div {
+        border-radius: 2px;
+    }
+    .wall {
+        background-color: dimgray;
+    }
+    .space {
+        background-color: white;
+    }
+    .start {
+        background-color: orangered;
+    }
+    .goal {
+        background-color: greenyellow;
+    }
+    .path {
+        background-color: yellow;
+    }
+</style>
+
+<body>
+    <div id="game" class="game"></div>
+    <script>
+        const MAZE = `###                 #########
+#   ###################   # #
+# ####          #     # # # #
+# ########## ######## # # # #
+#                     # # # #
+##################### # # # #
+#   ##                # #   #
+# # ## ### ## ######### # # #
+# #    #   ##B#         # # #
+# # ## ################ # ###
+# # ##             #### # # #
+# # ############## ## # # # #
+# #             ##    # # # #
+# #### ######## ####### # # #
+######    #             #   #
+A      ######################`;
+
+        const wait = async (n) => await new Promise(resolve => setTimeout(() => resolve(), n));
+        class Maze {
+            /**
+             * Initialize maze properties and elements
+            */
+            constructor(mazeText) {
+                const mazeRows = mazeText.split('\n');
+                this.width = mazeRows[0].length;
+                this.height = mazeRows.length;
+
+                this.mazeElement = document.getElementById('game');
+                this.mazeElement.style.width = `${22 * this.width + 2}px`;
+                this.mazeElement.style.height = `${22 * this.height + 2}px`;
+                this.mazeElement.style.gridTemplateRows = `repeat(${this.height}, 1fr)`;
+                this.mazeElement.style.gridTemplateColumns = `repeat(${this.width}, 1fr)`;
+
+                this.walls = [];
+                for (let i = 0; i < this.height; i++) {
+                    const row = [];
+                    for (let j = 0; j < this.width; j++)
+                        switch (mazeRows[i][j]) {
+                            case 'A':
+                                this.start = { i, j };
+                                this.mazeElement.insertAdjacentHTML('beforeend', '<div class="start"></div>');
+                                row.push(false);
+                                break;
+                            case 'B':
+                                this.goal = { i, j };
+                                this.mazeElement.insertAdjacentHTML('beforeend', '<div class="goal"></div>');
+                                row.push(false);
+                                break;
+                            case ' ':
+                                this.mazeElement.insertAdjacentHTML('beforeend', '<div class="space"></div>');
+                                row.push(false);
+                                break;
+                            default:
+                                this.mazeElement.insertAdjacentHTML('beforeend', '<div class="wall"></div>');
+                                row.push(true);
+                        }
+                    this.walls.push(row);
+                }
+            }
+            /**
+             * Returns possible next steps of a state,
+             * neighbors that are not explored and not in frontier yet
+             * @param state {1, j} coordinates
+            */
+            nextStates(state) {
+                const { i, j } = state;
+                return [
+                    { i: i - 1, j },
+                    { i: i + 1, j },
+                    { i, j: j - 1 },
+                    { i, j: j + 1 }
+                ].filter(a => 
+                    a.j > -1 && a.j < this.width && 
+                    a.i > -1 && a.i < this.height && 
+                    !this.walls[a.i][a.j] && 
+                    !this.frontier.find(b => b.i === a.i && b.j == a.j) &&
+                    !this.explored.find(b => b.i === a.i && b.j == a.j));
+            }
+            /**
+             * Check if a state has a neighbor in the frontier
+             * @param state {1, j} coordinates
+            */
+            hasFrontierNeighbor(state) {
+                const { i, j } = state;
+                return [
+                    { i: i - 1, j },
+                    { i: i + 1, j },
+                    { i, j: j - 1 },
+                    { i, j: j + 1 }
+                ].some(a => this.frontier.find(b => b.i === a.i && b.j == a.j))
+            }
+            /**
+             * Check if 2 states are equal
+             * @param stateA {1, j} coordinates
+             * @param stateB {1, j} coordinates
+            */
+            areStatesEqual(stateA, stateB) {
+                return stateA.i === stateB.i && stateA.j === stateB.j;
+            }
+            /**
+             * Solve the maze using DFS algorithm
+            */
+            async solve() {
+                this.frontier = [ this.start ];
+                this.explored = [];
+                const deadEnd = [];
+                while(true) {
+                    if(!this.frontier.length) 
+                        return;
+                    const state = this.frontier.pop();
+                    deadEnd.push(state);
+                    if(this.areStatesEqual(state, this.goal))
+                        return;
+                    if(!this.areStatesEqual(state, this.start))
+                        this.mazeElement.children[(state.i) * this.width + state.j].className = 'path';
+                    await wait(100);
+                    this.explored.push(state);
+                    const nextStates = this.nextStates(state).map(s => ({...s, parent: state}));
+                    if(nextStates.length)
+                        this.frontier = this.frontier.concat(nextStates);
+                    else if(!this.areStatesEqual(state, this.start))
+                        for(let s = state;s && !this.hasFrontierNeighbor(s);s = s.parent)
+                            this.mazeElement.children[(s.i) * this.width + s.j].className = 'space';
+                }
+            }
+        }
+        const start = () => {
+            const maze = new Maze(MAZE);
+            maze.solve();
+        }
+        start();
+    </script>
+</body>
+
+</html>
