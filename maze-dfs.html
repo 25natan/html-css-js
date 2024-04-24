@@ -156,7 +156,7 @@ A      ######################`;
                         return;
                     if(!this.areStatesEqual(state, this.start))
                         this.mazeElement.children[(state.i) * this.width + state.j].className = 'path';
-                    await wait(100);
+                    await wait(200);
                     this.explored.push(state);
                     const nextStates = this.nextStates(state).map(s => ({...s, parent: state}));
                     if(nextStates.length)
