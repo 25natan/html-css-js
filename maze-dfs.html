@@ -10,6 +10,7 @@
     body {
         width: 100%;
         height: 100%;
+        padding-left: 10px;
     }
     .game {
         border-radius: 2px;
@@ -22,10 +23,10 @@
         border-radius: 2px;
     }
     .wall {
-        background-color: dimgray;
+        background-color: grey;
     }
     .space {
-        background-color: white;
+        background-color: black;
     }
     .start {
         background-color: orangered;
@@ -33,13 +34,60 @@
     .goal {
         background-color: greenyellow;
     }
-    .path {
+    .explored, .path {
         background-color: yellow;
+    }
+    .vanish {
+        animation: vanish 0.5s linear forwards;
+    }
+    @keyframes vanish {
+        from {
+            background-color: yellow;
+        }
+        to {
+            background-color: black;
+        }
+    }
+    .buttons {
+        padding-top: 20px;
+    }
+    .buttons > button {
+        padding: 5px 80px ;
+        margin-right: 10px;
+        border-radius: 5px;
+        border: 1px solid rgb(1, 103, 30);
+        background-color: rgb(166, 250, 189);
+        color: rgb(1, 103, 30);
+        font-family: 'Courier New', Courier, monospace;
+        font-size: x-large;
+    }
+    .buttons > button:hover {
+        background-color: rgb(1, 103, 30);
+        color: rgb(166, 250, 189);
+    }
+    .buttons > button:focus {
+        animation: buttonClick 0.2s;
+    }
+    @keyframes buttonClick {
+        from {
+            scale: 1;
+        }
+        50% {
+            scale: 1.06;
+        }
+        to {
+            scale: 1;
+        }
     }
 </style>
 
 <body>
+    <h2 class="title">BFS and DFS maze solving simulation</h1>
     <div id="game" class="game"></div>
+    <div class="buttons">
+        <button onclick="clearAndSolve('DFS')">BFS</button>
+        <button onclick="clearAndSolve('BFS')">DFS</button>
+    </div>
     <script>
         const MAZE = `###                 #########
 #   ###################   # #
@@ -60,17 +108,15 @@ A      ######################`;
 
         const wait = async (n) => await new Promise(resolve => setTimeout(() => resolve(), n));
         class Maze {
-            /**
-             * Initialize maze properties and elements
-            */
+            
             constructor(mazeText) {
                 const mazeRows = mazeText.split('\n');
                 this.width = mazeRows[0].length;
                 this.height = mazeRows.length;
 
                 this.mazeElement = document.getElementById('game');
-                this.mazeElement.style.width = `${32 * this.width + 2}px`;
-                this.mazeElement.style.height = `${32 * this.height + 2}px`;
+                this.mazeElement.style.width = `${22 * this.width + 2}px`;
+                this.mazeElement.style.height = `${22 * this.height + 2}px`;
                 this.mazeElement.style.gridTemplateRows = `repeat(${this.height}, 1fr)`;
                 this.mazeElement.style.gridTemplateColumns = `repeat(${this.width}, 1fr)`;
 
@@ -100,11 +146,7 @@ A      ######################`;
                     this.walls.push(row);
                 }
             }
-            /**
-             * Returns possible next steps of a state,
-             * neighbors that are not explored and not in frontier yet
-             * @param state {1, j} coordinates
-            */
+            
             nextStates(state) {
                 const { i, j } = state;
                 return [
@@ -119,10 +161,7 @@ A      ######################`;
                     !this.frontier.find(b => b.i === a.i && b.j == a.j) &&
                     !this.explored.find(b => b.i === a.i && b.j == a.j));
             }
-            /**
-             * Check if a state has a neighbor in the frontier
-             * @param state {1, j} coordinates
-            */
+            
             hasFrontierNeighbor(state) {
                 const { i, j } = state;
                 return [
@@ -132,46 +171,43 @@ A      ######################`;
                     { i, j: j + 1 }
                 ].some(a => this.frontier.find(b => b.i === a.i && b.j == a.j))
             }
-            /**
-             * Check if 2 states are equal
-             * @param stateA {1, j} coordinates
-             * @param stateB {1, j} coordinates
-            */
+
             areStatesEqual(stateA, stateB) {
                 return stateA.i === stateB.i && stateA.j === stateB.j;
             }
-            /**
-             * Solve the maze using DFS algorithm
-            */
-            async solve() {
+            
+            async solve(algorithm) {
+                Array.prototype.remove = algorithm === 'BFS' ? function() { return this.pop(); } : function() { return this.shift(); };
                 this.frontier = [ this.start ];
                 this.explored = [];
                 const deadEnd = [];
                 while(true) {
                     if(!this.frontier.length) 
-                        return;
-                    const state = this.frontier.pop();
+                        break;
+                    const state = this.frontier.remove();
                     deadEnd.push(state);
-                    if(this.areStatesEqual(state, this.goal))
-                        return;
+                    if(this.areStatesEqual(state, this.goal)) {
+                        for(let pathStep = state.parent;pathStep && !this.areStatesEqual(pathStep, this.start);pathStep = pathStep.parent)
+                            this.mazeElement.children[(pathStep.i) * this.width + pathStep.j].className = 'path';
+                        break;
+                    }
                     if(!this.areStatesEqual(state, this.start))
-                        this.mazeElement.children[(state.i) * this.width + state.j].className = 'path';
-                    await wait(200);
+                        this.mazeElement.children[(state.i) * this.width + state.j].className = 'explored';
+                    await wait(50);
                     this.explored.push(state);
                     const nextStates = this.nextStates(state).map(s => ({...s, parent: state}));
-                    if(nextStates.length)
-                        this.frontier = this.frontier.concat(nextStates);
-                    else if(!this.areStatesEqual(state, this.start))
-                        for(let s = state;s && !this.hasFrontierNeighbor(s);s = s.parent)
-                            this.mazeElement.children[(s.i) * this.width + s.j].className = 'space';
+                    this.frontier = this.frontier.concat(nextStates);
                 }
+                const explored = this.mazeElement.getElementsByClassName('explored');
+                while(explored.length)
+                    explored.item(0).className = 'vanish';
             }
         }
-        const start = () => {
-            const maze = new Maze(MAZE);
-            maze.solve();
+        const clearAndSolve = (algorithm) => {
+            document.getElementById('game').innerHTML = '';
+            new Maze(MAZE).solve(algorithm);
         }
-        start();
+        clearAndSolve('DFS');
     </script>
 </body>
 
