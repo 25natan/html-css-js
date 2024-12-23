@@ -1,1 +1,1 @@
-https://nathantest.jfrog.info/ui/packages
+http://localhost:8082/ui/packages
